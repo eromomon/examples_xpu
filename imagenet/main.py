@@ -174,7 +174,6 @@ def main_worker(gpu, ngpus_per_node, args):
     elif torch.xpu.is_available():
         device = torch.device("xpu")
         model = model.to(device)
-        print ('Device to use: ', device)
     elif torch.backends.mps.is_available():
         device = torch.device("mps")
         model = model.to(device)
@@ -197,6 +196,9 @@ def main_worker(gpu, ngpus_per_node, args):
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
+
+    print (f"Device to use: ", {device.type})
+
     # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().to(device)
 
@@ -360,16 +362,19 @@ def validate(val_loader, model, criterion, args):
             end = time.time()
             for i, (images, target) in enumerate(loader):
                 i = base_progress + i
-                if args.gpu is not None and torch.cuda.is_available():
-                    images = images.cuda(args.gpu, non_blocking=True)
-                if torch.xpu.is_available():
-                    images = images.to("xpu")
-                    target = target.to("xpu")
-                if torch.backends.mps.is_available():
-                    images = images.to('mps')
-                    target = target.to('mps')
                 if torch.cuda.is_available():
                     target = target.cuda(args.gpu, non_blocking=True)
+
+                if args.gpu is not None and torch.cuda.is_available():
+                    images = images.cuda(args.gpu, non_blocking=True)
+                elif torch.xpu.is_available():
+                    images = images.to("xpu")
+                    target = target.to("xpu")
+                elif torch.backends.mps.is_available():
+                    images = images.to('mps')
+                    target = target.to('mps')
+                else:
+                    pass
 
                 # compute output
                 output = model(images)
