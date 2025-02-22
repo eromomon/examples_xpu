@@ -362,19 +362,16 @@ def validate(val_loader, model, criterion, args):
             end = time.time()
             for i, (images, target) in enumerate(loader):
                 i = base_progress + i
-                if torch.cuda.is_available():
-                    target = target.cuda(args.gpu, non_blocking=True)
 
                 if args.gpu is not None and torch.cuda.is_available():
                     images = images.cuda(args.gpu, non_blocking=True)
+                    target = target.cuda(args.gpu, non_blocking=True)
                 elif torch.xpu.is_available():
                     images = images.to("xpu")
                     target = target.to("xpu")
                 elif torch.backends.mps.is_available():
                     images = images.to('mps')
                     target = target.to('mps')
-                else:
-                    pass
 
                 # compute output
                 output = model(images)
